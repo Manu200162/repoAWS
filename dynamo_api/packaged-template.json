@@ -1,0 +1,78 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform:
+- AWS::Serverless-2016-10-31
+Description: My Lambda Resources
+Resources:
+  GetUserFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: getUser
+      Environment:
+        Variables:
+          USERS_TABLE:
+            Ref: MyUsersTable
+      Handler: users.getUser
+      Runtime: python3.6
+      CodeUri: s3://dynamo-bucket-46456/79431baea41e651dd5bf39922ecf8e35
+      Policies:
+      - DynamoDBReadPolicy:
+          TableName:
+            Ref: MyUsersTable
+      Events:
+        GetUsers:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: MyAPI
+            Path: /user/{userId}
+            Method: GET
+  PutUserFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: putUser
+      Environment:
+        Variables:
+          USERS_TABLE:
+            Ref: MyUsersTable
+      Handler: users.putUser
+      Runtime: python3.6
+      CodeUri: s3://dynamo-bucket-46456/79431baea41e651dd5bf39922ecf8e35
+      Policies:
+      - DynamoDBWritePolicy:
+          TableName:
+            Ref: MyUsersTable
+      Events:
+        GetUsers:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: MyAPI
+            Path: /user/{userId}
+            Method: PUT
+  MyAPI:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: my-api-gateway
+      StageName: prod
+      DefinitionBody:
+        Fn::Transform:
+          Name: AWS::Include
+          Parameters:
+            Location: s3://dynamo-bucket-46456/1f3f90c8af52af656b7af6b559701739
+  MyUsersTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: my-users-app-3
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
+      KeySchema:
+      - AttributeName: pk
+        KeyType: HASH
+      - AttributeName: sk
+        KeyType: RANGE
+      AttributeDefinitions:
+      - AttributeName: pk
+        AttributeType: S
+      - AttributeName: sk
+        AttributeType: S
